@@ -1,39 +1,21 @@
-var Koa = require('koa');
+var koa = require('koa');
 var jwt = require('koa-jwt');
 
-var app = new Koa();
+var app = new koa();
 
-// Custom 401 handling if you don't want to expose koa-jwt errors to users
-// 自定义处理 401 如果你不想暴露 koa-jwt 错误对用户
-app.use(function(ctx, next){
-  return next().catch((err) => {
-    if (401 == err.status) {
-      ctx.status = 401;
-      ctx.body = '受保护的资源，使用授权标头获取访问\n';
-    } else {
-      throw err;
-    }
-  });
-});
+app.use(jwt({
+  secret: 'nobey1',
+  // key: 'jwtdata'
+}));
 
-// Unprotected middleware
-app.use(function(ctx, next){
-  if (ctx.url.match(/^\/public/)) {
-    ctx.body = '无保护的\n';
-  } else {
-    return next();
-  }
-});
-
-// Middleware below this line is only reached if JWT token is valid
-// 中间件下面这条线是只达到如果JWT标记是有效的
-app.use(jwt({ secret: 'shared-secret' }));
+// curl --header "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIyMjIiLCJpYXQiOjE0OTYyMjM4NzN9.HUD8F3WJPVxPwp1M_wlpyKbjqBCGxbECetXUo-r_H9g" 127.0.0.1:3001
+// 请求头 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIyMjIiLCJpYXQiOjE0OTYyMjM4NzN9.HUD8F3WJPVxPwp1M_wlpyKbjqBCGxbECetXUo-r_H9g
 
 // Protected middleware
-app.use(function(ctx){
-  if (ctx.url.match(/^\/api/)) {
-    ctx.body = '受保护的\n';
-  }
+app.use((ctx, next) => {
+  // content of the token will be available on this.state.user
+  ctx.body = ctx.state
 });
+
 
 app.listen(3001);
